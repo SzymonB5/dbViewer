@@ -19,4 +19,9 @@ public class DbViewerApplication {
 		return "Currently using " + DatabaseConnector.getDatabaseName() + ".";
 	}
 
+	@GetMapping("/test")
+	public String test2() {
+		return "123";
+	}
+
 }
