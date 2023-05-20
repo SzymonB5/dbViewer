@@ -10,12 +10,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class DbViewerApplication {
 
 	public static void main(String[] args) {
+//		System.out.println(DatabaseConnector.getDatabaseName());
 		SpringApplication.run(DbViewerApplication.class, args);
 	}
 
-	@GetMapping("/test")
+	@GetMapping("/")
 	public String test() {
-		return "Hello world!123";
+		return "Currently using " + DatabaseConnector.getDatabaseName() + ".";
+	}
+
+	@GetMapping("/test")
+	public String test2() {
+		return "123";
 	}
 
 }
