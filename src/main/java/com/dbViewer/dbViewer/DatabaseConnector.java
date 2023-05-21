@@ -1,6 +1,9 @@
 package com.dbViewer.dbViewer;
 
 import java.sql.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 public class DatabaseConnector {
     public static final String jdbcUrl = "jdbc:postgresql://ep-wild-bush-363371.eu-central-1.aws.neon.tech/neondb";
@@ -29,6 +32,67 @@ public class DatabaseConnector {
             return false;
         }
     }
+    public static String getTableContent(String tableName) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("<h3>Table ").append(tableName).append(" content:</h3>\n");
+        Connection connection = getConnection();
+        String query = "SELECT * FROM " + tableName;
+
+        try {
+            assert connection != null;
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            stringBuilder.append("<table>");
+            stringBuilder.append("<tr>");
+            for (int i = 1; i <= columnCount; i++)
+                stringBuilder.append("<th>").append(metaData.getColumnName(i)).append("</th>");
+
+            stringBuilder.append("</tr>");
+
+            while (resultSet.next()) {
+                stringBuilder.append("<tr>");
+                for (int i = 1; i <= columnCount; i++)
+                    stringBuilder.append("<td>").append(resultSet.getString(i)).append("</td>");
+
+                stringBuilder.append("</tr>");
+            }
+
+            stringBuilder.append("</table>");
+
+        } catch (SQLException e) {
+            return "Table " + tableName + " does not exist";
+        }
+
+        return stringBuilder.toString();
+    }
+
+
+    public static HashSet<String> getDatabaseInfo() {
+        Connection connection = getConnection();
+        HashSet<String> ret = new HashSet<>();
+        String query = "SELECT table_name FROM information_schema.tables" +
+                " WHERE table_schema='public' AND table_type='BASE TABLE'";
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next())
+                ret.add(resultSet.getString("table_name"));
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        closeConnection(connection);
+
+        return ret;
+    }
 
     public static String getDatabaseName() {
         Connection connection = getConnection();
@@ -46,30 +110,22 @@ public class DatabaseConnector {
 
     public static void test() {
         try {
-            // Register the PostgreSQL JDBC driver
             Class.forName("org.postgresql.Driver");
-
-            // Establish the connection
             Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
 
-            // Execute a simple query
             String query = "SELECT * FROM users";
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
 
-            // Process the result set
             while (resultSet.next()) {
-                // Assuming your table has columns named "column1" and "column2"
                 String column1Value = resultSet.getString("name");
                 int column2Value = resultSet.getInt("counter");
 
-                // Print the retrieved values
                 System.out.println("column1: " + column1Value);
                 System.out.println("column2: " + column2Value);
                 System.out.println("--------------------");
             }
 
-            // Close the resources
             resultSet.close();
             statement.close();
             connection.close();
